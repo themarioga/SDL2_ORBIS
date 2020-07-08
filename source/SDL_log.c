@@ -38,7 +38,7 @@
 #endif
 
 #if defined(__ORBIS__)
-#include <debugnet.h>
+//#include <debugnet.h>
 #endif
 
 #define DEFAULT_PRIORITY                SDL_LOG_PRIORITY_CRITICAL
@@ -426,7 +426,7 @@ SDL_LogOutput(void *userdata, int category, SDL_LogPriority priority,
     }
 #elif defined(__ORBIS__)
     {
-        debugNetPrintf(DEBUG, "%s: %s\n", SDL_priority_prefixes[priority], message);
+        //debugNetPrintf(DEBUG, "%s: %s\n", SDL_priority_prefixes[priority], message);
     }
 #endif
 #if HAVE_STDIO_H && !defined(__ORBIS__)

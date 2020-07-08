@@ -47,7 +47,7 @@ int SDL_SYS_CreateThread(SDL_Thread *thread, void *args)
     ScePthread thid; 
     thid = scePthreadSelf();
     if (scePthreadGetprio(thid, &priority) == 0 && priority>1) {
-		ret=scePthreadCreate(&thread->handle, NULL, ThreadEntry, NULL, NULL);
+		ret=scePthreadCreate(&thread->handle, NULL, ThreadEntry, args, NULL);
 		if(ret==0)
 		{
 			scePthreadSetprio(thread->handle, priority);

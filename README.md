@@ -1,5 +1,6 @@
-SDL2 for liborbis
+SDL2 for OpenOrbis (maybe)
 ======================
+Probably SDL2 for OpenOrbis, not sure because I can't test it until TheFlow's exploit is fully working for 6.74 (or at least 6.20) but it compiles ¯\_(ツ)_/¯
  
  What does this do?
 ===================
