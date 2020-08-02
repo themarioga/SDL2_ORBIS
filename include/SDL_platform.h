@@ -158,9 +158,9 @@
 #undef __PSP__
 #define __PSP__ 1
 #endif
-#if defined(__ORBIS__)
-#undef __ORBIS__
-#define __ORBIS__ 1
+#if defined(__OPENORBIS__)
+#undef __OPENORBIS__
+#define __OPENORBIS__ 1
 #endif
 
 /* The NACL compiler defines __native_client__ and __pnacl__

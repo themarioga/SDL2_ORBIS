@@ -21,9 +21,8 @@
 
 #include "../../SDL_internal.h"
 
-#if SDL_VIDEO_DRIVER_ORBIS
+#if SDL_VIDEO_DRIVER_OPENORBIS
 
-#include <orbis2d.h>
 /* SDL internals */
 #include "../SDL_sysvideo.h"
 #include "SDL_version.h"
@@ -34,19 +33,14 @@
 #include "../../events/SDL_keyboard_c.h"
 
 /* ORBIS declarations */
-#include "SDL_orbisvideo.h"
-#include "SDL_orbiskeyboard.h"
-//#include "SDL_orbismouse_c.h"
+#include "SDL_video_openorbis.h"
 
-SDL_Window *Orbis_Window;
+SDL_bool OPENORBIS_initialized = SDL_FALSE;
 
-/* unused
-static SDL_bool ORBIS_initialized = SDL_FALSE;
-*/
 static int
-ORBIS_Available(void)
+OPENORBIS_Available(void)
 {
-    if(orbis2dGetStatus() == 1) {
+    if(OPENORBIS_initialized == SDL_FALSE) {
         return 1;
     }
     else {
@@ -55,24 +49,22 @@ ORBIS_Available(void)
 }
 
 static void
-ORBIS_Destroy(SDL_VideoDevice * device)
+OPENORBIS_Destroy(SDL_VideoDevice * device)
 {
-/*    SDL_VideoData *phdata = (SDL_VideoData *) device->driverdata; */
-
     if (device->driverdata != NULL) {
         device->driverdata = NULL;
     }
 }
 
 static SDL_VideoDevice *
-ORBIS_Create()
+OPENORBIS_Create()
 {
     SDL_VideoDevice *device;
     SDL_VideoData *phdata;
     int status;
 
     /* Check if ORBIS could be initialized */
-    status = ORBIS_Available();
+    status = OPENORBIS_Available();
     if (status == 0) {
         /* VITA could not be used */
         return NULL;
@@ -100,50 +92,50 @@ ORBIS_Create()
     device->num_displays = 0;
 
     /* Set device free function */
-    device->free = ORBIS_Destroy;
+    device->free = OPENORBIS_Destroy;
 
     /* Setup all functions which we can handle */
-    device->VideoInit = ORBIS_VideoInit;
-    device->VideoQuit = ORBIS_VideoQuit;
-    device->GetDisplayModes = ORBIS_GetDisplayModes;
-    device->SetDisplayMode = ORBIS_SetDisplayMode;
-    device->CreateSDLWindow = ORBIS_CreateWindow;
-    device->CreateSDLWindowFrom = ORBIS_CreateWindowFrom;
-    device->SetWindowTitle = ORBIS_SetWindowTitle;
-    device->SetWindowIcon = ORBIS_SetWindowIcon;
-    device->SetWindowPosition = ORBIS_SetWindowPosition;
-    device->SetWindowSize = ORBIS_SetWindowSize;
-    device->ShowWindow = ORBIS_ShowWindow;
-    device->HideWindow = ORBIS_HideWindow;
-    device->RaiseWindow = ORBIS_RaiseWindow;
-    device->MaximizeWindow = ORBIS_MaximizeWindow;
-    device->MinimizeWindow = ORBIS_MinimizeWindow;
-    device->RestoreWindow = ORBIS_RestoreWindow;
-    device->SetWindowGrab = ORBIS_SetWindowGrab;
-    device->DestroyWindow = ORBIS_DestroyWindow;
-    device->GetWindowWMInfo = ORBIS_GetWindowWMInfo;
-    device->HasScreenKeyboardSupport = ORBIS_HasScreenKeyboardSupport;
-    device->ShowScreenKeyboard = ORBIS_ShowScreenKeyboard;
-    device->HideScreenKeyboard = ORBIS_HideScreenKeyboard;
-    device->IsScreenKeyboardShown = ORBIS_IsScreenKeyboardShown;
+    device->VideoInit = OPENORBIS_VideoInit;
+    device->VideoQuit = OPENORBIS_VideoQuit;
+    device->GetDisplayModes = OPENORBIS_GetDisplayModes;
+    device->SetDisplayMode = OPENORBIS_SetDisplayMode;
+    device->CreateSDLWindow = OPENORBIS_CreateWindow;
+    device->CreateSDLWindowFrom = OPENORBIS_CreateWindowFrom;
+    device->SetWindowTitle = OPENORBIS_SetWindowTitle;
+    device->SetWindowIcon = OPENORBIS_SetWindowIcon;
+    device->SetWindowPosition = OPENORBIS_SetWindowPosition;
+    device->SetWindowSize = OPENORBIS_SetWindowSize;
+    device->ShowWindow = OPENORBIS_ShowWindow;
+    device->HideWindow = OPENORBIS_HideWindow;
+    device->RaiseWindow = OPENORBIS_RaiseWindow;
+    device->MaximizeWindow = OPENORBIS_MaximizeWindow;
+    device->MinimizeWindow = OPENORBIS_MinimizeWindow;
+    device->RestoreWindow = OPENORBIS_RestoreWindow;
+    device->SetWindowGrab = OPENORBIS_SetWindowGrab;
+    device->DestroyWindow = OPENORBIS_DestroyWindow;
+    device->GetWindowWMInfo = OPENORBIS_GetWindowWMInfo;
+    device->HasScreenKeyboardSupport = OPENORBIS_HasScreenKeyboardSupport;
+    device->ShowScreenKeyboard = OPENORBIS_ShowScreenKeyboard;
+    device->HideScreenKeyboard = OPENORBIS_HideScreenKeyboard;
+    device->IsScreenKeyboardShown = OPENORBIS_IsScreenKeyboardShown;
 
-	device->PumpEvents = ORBIS_PumpEvents;
+	device->PumpEvents = OPENORBIS_PumpEvents;
 
     return device;
 }
 
-VideoBootStrap ORBIS_bootstrap = {
-    "ORBIS",
-    "ORBIS Video Driver",
-    ORBIS_Available,
-    ORBIS_Create
+VideoBootStrap OPENORBIS_bootstrap = {
+    "OPENORBIS",
+    "OPENORBIS Video Driver",
+    OPENORBIS_Available,
+    OPENORBIS_Create
 };
 
 /*****************************************************************************/
 /* SDL Video and Display initialization/handling functions                   */
 /*****************************************************************************/
 int
-ORBIS_VideoInit(_THIS)
+OPENORBIS_VideoInit(_THIS)
 {
     SDL_VideoDisplay display;
     SDL_DisplayMode current_mode;
@@ -165,33 +157,30 @@ ORBIS_VideoInit(_THIS)
     display.driverdata = NULL;
 
     SDL_AddVideoDisplay(&display);
-    //ORBIS_InitTouch();
-    ORBIS_InitKeyboard();
-    //ORBIS_InitMouse();
 
     return 1;
 }
 
 void
-ORBIS_VideoQuit(_THIS)
+OPENORBIS_VideoQuit(_THIS)
 {
-    //ORBIS_QuitTouch();
+    
 }
 
 void
-ORBIS_GetDisplayModes(_THIS, SDL_VideoDisplay * display)
+OPENORBIS_GetDisplayModes(_THIS, SDL_VideoDisplay * display)
 {
 
 }
 
 int
-ORBIS_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode)
+OPENORBIS_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode)
 {
     return 0;
 }
 
 int
-ORBIS_CreateWindow(_THIS, SDL_Window * window)
+OPENORBIS_CreateWindow(_THIS, SDL_Window * window)
 {
     SDL_WindowData *wdata;
 
@@ -205,13 +194,13 @@ ORBIS_CreateWindow(_THIS, SDL_Window * window)
     window->driverdata = wdata;
 
     // ORBIS can only have one window
-    if (Orbis_Window != NULL)
+    if (OPENORBIS_initialized == SDL_TRUE)
     {
         // Replace this with something else
         return SDL_OutOfMemory();
     }
 
-    Orbis_Window = window;
+    OPENORBIS_initialized = SDL_TRUE;
 
     // fix input, we need to find a better way
     SDL_SetKeyboardFocus(window);
@@ -221,58 +210,57 @@ ORBIS_CreateWindow(_THIS, SDL_Window * window)
 }
 
 int
-ORBIS_CreateWindowFrom(_THIS, SDL_Window * window, const void *data)
+OPENORBIS_CreateWindowFrom(_THIS, SDL_Window * window, const void *data)
 {
     return -1;
 }
 
 void
-ORBIS_SetWindowTitle(_THIS, SDL_Window * window)
+OPENORBIS_SetWindowTitle(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_SetWindowIcon(_THIS, SDL_Window * window, SDL_Surface * icon)
+OPENORBIS_SetWindowIcon(_THIS, SDL_Window * window, SDL_Surface * icon)
 {
 }
 void
-ORBIS_SetWindowPosition(_THIS, SDL_Window * window)
+OPENORBIS_SetWindowPosition(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_SetWindowSize(_THIS, SDL_Window * window)
+OPENORBIS_SetWindowSize(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_ShowWindow(_THIS, SDL_Window * window)
+OPENORBIS_ShowWindow(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_HideWindow(_THIS, SDL_Window * window)
+OPENORBIS_HideWindow(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_RaiseWindow(_THIS, SDL_Window * window)
+OPENORBIS_RaiseWindow(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_MaximizeWindow(_THIS, SDL_Window * window)
+OPENORBIS_MaximizeWindow(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_MinimizeWindow(_THIS, SDL_Window * window)
+OPENORBIS_MinimizeWindow(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_RestoreWindow(_THIS, SDL_Window * window)
+OPENORBIS_RestoreWindow(_THIS, SDL_Window * window)
 {
 }
 void
-ORBIS_SetWindowGrab(_THIS, SDL_Window * window, SDL_bool grabbed)
+OPENORBIS_SetWindowGrab(_THIS, SDL_Window * window, SDL_bool grabbed)
 {
-
 }
 void
-ORBIS_DestroyWindow(_THIS, SDL_Window * window)
+OPENORBIS_DestroyWindow(_THIS, SDL_Window * window)
 {
 }
 
@@ -280,7 +268,7 @@ ORBIS_DestroyWindow(_THIS, SDL_Window * window)
 /* SDL Window Manager function                                               */
 /*****************************************************************************/
 SDL_bool
-ORBIS_GetWindowWMInfo(_THIS, SDL_Window * window, struct SDL_SysWMinfo *info)
+OPENORBIS_GetWindowWMInfo(_THIS, SDL_Window * window, struct SDL_SysWMinfo *info)
 {
     if (info->version.major <= SDL_MAJOR_VERSION) {
         return SDL_TRUE;
@@ -296,28 +284,26 @@ ORBIS_GetWindowWMInfo(_THIS, SDL_Window * window, struct SDL_SysWMinfo *info)
 
 
 /* TO Write Me */
-SDL_bool ORBIS_HasScreenKeyboardSupport(_THIS)
+SDL_bool OPENORBIS_HasScreenKeyboardSupport(_THIS)
 {
     return SDL_FALSE;
 }
-void ORBIS_ShowScreenKeyboard(_THIS, SDL_Window *window)
+void OPENORBIS_ShowScreenKeyboard(_THIS, SDL_Window *window)
 {
 }
-void ORBIS_HideScreenKeyboard(_THIS, SDL_Window *window)
+void OPENORBIS_HideScreenKeyboard(_THIS, SDL_Window *window)
 {
 }
-SDL_bool ORBIS_IsScreenKeyboardShown(_THIS, SDL_Window *window)
+SDL_bool OPENORBIS_IsScreenKeyboardShown(_THIS, SDL_Window *window)
 {
     return SDL_FALSE;
 }
 
-void ORBIS_PumpEvents(_THIS)
+void OPENORBIS_PumpEvents(_THIS)
 {
-    //ORBIS_PollTouch();
-    ORBIS_PollKeyboard();
-	//ORBIS_PollMouse();
+    
 }
 
-#endif /* SDL_VIDEO_DRIVER_ORBIS */
+#endif /* SDL_VIDEO_DRIVER_OPENORBIS */
 
 /* vi: set ts=4 sw=4 expandtab: */

@@ -38,6 +38,8 @@
 #include "vita/SDL_systhread_c.h"
 #elif SDL_THREAD_ORBIS
 #include "orbis/SDL_systhread_c.h"
+#elif SDL_THREAD_OPENORBIS
+#include "openorbis/SDL_systhread_c.h"
 #elif SDL_THREAD_STDCPP
 #include "stdcpp/SDL_systhread_c.h"
 #else

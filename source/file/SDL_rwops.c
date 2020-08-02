@@ -47,12 +47,10 @@
 #include "SDL_endian.h"
 #include "SDL_rwops.h"
 
-
-
-#ifdef __ORBIS__
+#ifdef __OPENORBIS__
 #include <fcntl.h>
-#include <ps4link.h>
-#endif /* __ORBIS__ */
+//#include <ps4link.h>
+#endif /* __OPENORBIS__ */
 
 #ifdef __APPLE__
 #include "cocoa/SDL_rwopsbundlesupport.h"
@@ -428,12 +426,12 @@ stdio_close(SDL_RWops * context)
 #endif /* !HAVE_STDIO_H */
 
 /* Functions to read/write ORBIS file host pointers*/
-int orbis_open(SDL_RWops* ctx,const char* fileName, const char* mode)
+/*int openorbis_open(SDL_RWops* ctx,const char* fileName, const char* mode)
 {
 	 return ps4LinkOpen(fileName,O_RDONLY,0);
 }
 static Sint64 SDLCALL
-orbis_size(SDL_RWops * context)
+openorbis_size(SDL_RWops * context)
 {
     Sint64 pos, size;
 
@@ -447,7 +445,7 @@ orbis_size(SDL_RWops * context)
     return size;
 }
 static Sint64 SDLCALL
-orbis_seek(SDL_RWops * context, Sint64 offset, int whence)
+openorbis_seek(SDL_RWops * context, Sint64 offset, int whence)
 {
 	Sint64 pos = ps4LinkLseek(context->hidden.orbis.fd, (int)offset, whence);
 	if (pos < 0) {
@@ -456,7 +454,7 @@ orbis_seek(SDL_RWops * context, Sint64 offset, int whence)
     return pos;
 }
 static size_t SDLCALL
-orbis_read(SDL_RWops * context, void *ptr, size_t size, size_t maxnum)
+openorbis_read(SDL_RWops * context, void *ptr, size_t size, size_t maxnum)
 {
     size_t nread;
 
@@ -467,7 +465,7 @@ orbis_read(SDL_RWops * context, void *ptr, size_t size, size_t maxnum)
     return nread;
 }
 static size_t SDLCALL
-orbis_write(SDL_RWops * context, const void *ptr, size_t size, size_t num)
+openorbis_write(SDL_RWops * context, const void *ptr, size_t size, size_t num)
 {
     size_t nwrote;
 
@@ -478,11 +476,11 @@ orbis_write(SDL_RWops * context, const void *ptr, size_t size, size_t num)
     return nwrote;
 }
 static int SDLCALL
-orbis_close(SDL_RWops * context)
+openorbis_close(SDL_RWops * context)
 {
     int status = 0;
     if (context) {
-		/* WARNING:  Check the return value here! */
+		// WARNING:  Check the return value here!
 		if (ps4LinkClose(context->hidden.orbis.fd) > 0) {
 			status = SDL_Error(SDL_EFWRITE);
         }
@@ -490,7 +488,7 @@ orbis_close(SDL_RWops * context)
         SDL_FreeRW(context);
     }
     return status;
-}
+}*/
 
 
 /* Functions to read/write memory pointers */
@@ -591,22 +589,22 @@ SDL_RWFromFile(const char *file, const char *mode)
         return NULL;
     }
 	
-#if defined(__ORBIS__)
+#if defined(__OPENORBIS__)
     /* Try to open the file from the asset system */
-    rwops = SDL_AllocRW();
+    /*rwops = SDL_AllocRW();
     if (!rwops)
-        return NULL;            /* SDL_SetError already setup by SDL_AllocRW() */
-	rwops->hidden.orbis.fd = orbis_open(rwops, file, mode);
+        return NULL;            // SDL_SetError already setup by SDL_AllocRW()
+	rwops->hidden.orbis.fd = openorbis_open(rwops, file, mode);
     if (rwops->hidden.orbis.fd < 0) {
         SDL_FreeRW(rwops);
         return NULL;
     }
-    rwops->size = orbis_size;
-    rwops->seek = orbis_seek;
-    rwops->read = orbis_read;
-    rwops->write = orbis_write;
-    rwops->close = orbis_close;
-    rwops->type = SDL_RWOPS_ORBISHOST;
+    rwops->size = openorbis_size;
+    rwops->seek = openorbis_seek;
+    rwops->read = openorbis_read;
+    rwops->write = openorbis_write;
+    rwops->close = openorbis_close;
+    rwops->type = SDL_RWOPS_ORBISHOST;*/
 	
 #endif
 #if defined(__ANDROID__)

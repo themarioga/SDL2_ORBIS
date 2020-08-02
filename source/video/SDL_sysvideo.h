@@ -412,6 +412,7 @@ extern VideoBootStrap Android_bootstrap;
 extern VideoBootStrap PSP_bootstrap;
 extern VideoBootStrap VITA_bootstrap;
 extern VideoBootStrap ORBIS_bootstrap;
+extern VideoBootStrap OPENORBIS_bootstrap;
 extern VideoBootStrap RPI_bootstrap;
 extern VideoBootStrap KMSDRM_bootstrap;
 extern VideoBootStrap DUMMY_bootstrap;

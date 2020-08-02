@@ -18,87 +18,19 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "../../SDL_internal.h"
 
-#if SDL_VIDEO_RENDER_ORBIS
+#if SDL_VIDEO_RENDER_OPENORBIS
 
-#include "SDL_hints.h"
-#include "../SDL_sysrender.h"
-
-#include <kernel.h>
+#include "SDL_render_openorbis.h"
+#include <orbis/libkernel.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include <orbis2d.h>
-
-extern int64_t flipArg;
-
-/* Orbis renderer implementation, based on the orbis2d lib  */
-
-
-extern int SDL_RecreateWindow(SDL_Window *window, Uint32 flags);
-
-
-static SDL_Renderer *ORBIS_CreateRenderer(SDL_Window *window, Uint32 flags);
-static void ORBIS_WindowEvent(SDL_Renderer *renderer, const SDL_WindowEvent *event);
-static int ORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture);
-static int ORBIS_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture,
-	const SDL_Rect *rect, const void *pixels, int pitch);
-static int ORBIS_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture,
-	const SDL_Rect *rect, void **pixels, int *pitch);
-static void ORBIS_UnlockTexture(SDL_Renderer *renderer,
-	 SDL_Texture *texture);
-static int ORBIS_SetRenderTarget(SDL_Renderer *renderer,
-		 SDL_Texture *texture);
-static int ORBIS_UpdateViewport(SDL_Renderer *renderer);
-static int ORBIS_RenderClear(SDL_Renderer *renderer);
-static int ORBIS_RenderDrawPoints(SDL_Renderer *renderer,
-		const SDL_FPoint *points, int count);
-static int ORBIS_RenderDrawLines(SDL_Renderer *renderer,
-		const SDL_FPoint *points, int count);
-static int ORBIS_RenderFillRects(SDL_Renderer *renderer,
-		const SDL_FRect *rects, int count);
-static int ORBIS_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture,
-	const SDL_Rect *srcrect, const SDL_FRect *dstrect);
-static int ORBIS_RenderReadPixels(SDL_Renderer *renderer, const SDL_Rect *rect,
-	Uint32 pixel_format, void *pixels, int pitch);
-static int ORBIS_RenderCopyEx(SDL_Renderer *renderer, SDL_Texture *texture,
-	const SDL_Rect *srcrect, const SDL_FRect *dstrect,
-	const double angle, const SDL_FPoint *center, const SDL_RendererFlip flip);
-static void ORBIS_RenderPresent(SDL_Renderer *renderer);
-static void ORBIS_DestroyTexture(SDL_Renderer *renderer, SDL_Texture *texture);
-static void ORBIS_DestroyRenderer(SDL_Renderer *renderer);
-
-typedef struct
-{
-	void		*frontbuffer;
-	void		*backbuffer;
-	SDL_bool	initialized;
-	SDL_bool	displayListAvail;
-	unsigned int	psm;
-	unsigned int	bpp;
-	SDL_bool	vsync;
-	unsigned int	currentColor;
-	int		 currentBlendMode;
-
-} ORBIS_RenderData;
-
-
-typedef struct
-{
-	Orbis2dTexture	*tex;
-	unsigned int	pitch;
-	unsigned int	w;
-	unsigned int	h;
-} ORBIS_TextureData;
-
-
 static int
-GetScaleQuality(void)
-{
+GetScaleQuality(void){
 	const char *hint = SDL_GetHint(SDL_HINT_RENDER_SCALE_QUALITY);
 
 	if (!hint || *hint == '0' || SDL_strcasecmp(hint, "nearest") == 0) {
@@ -108,28 +40,9 @@ GetScaleQuality(void)
 	}
 }
 
-/*
-static int
-PixelFormatToVITAFMT(Uint32 format)
-{
-	switch (format) {
-	case SDL_PIXELFORMAT_BGR565:
-		return SCE_GXM_COLOR_FORMAT_R5G6B5;
-	case SDL_PIXELFORMAT_ABGR1555:
-		return SCE_GXM_COLOR_FORMAT_A1R5G5B5;
-	case SDL_PIXELFORMAT_ABGR4444:
-		return SCE_GXM_COLOR_FORMAT_A4R4G4B4;
-	case SDL_PIXELFORMAT_ABGR8888:
-	default:
-		return SCE_GXM_COLOR_FORMAT_A8B8G8R8;
-	}
-}
-*/
-
 void
-StartDrawing(SDL_Renderer *renderer)
-{
-	ORBIS_RenderData *data = (ORBIS_RenderData *) renderer->driverdata;
+StartDrawing(SDL_Renderer *renderer){
+	ORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
 	if(data->displayListAvail)
 		return;
 
@@ -139,8 +52,7 @@ StartDrawing(SDL_Renderer *renderer)
 }
 
 SDL_Renderer *
-ORBIS_CreateRenderer(SDL_Window *window, Uint32 flags)
-{
+OPENORBIS_CreateRenderer(SDL_Window *window, Uint32 flags){
 
 	SDL_Renderer *renderer;
 	ORBIS_RenderData *data;
@@ -151,7 +63,7 @@ ORBIS_CreateRenderer(SDL_Window *window, Uint32 flags)
 		return NULL;
 	}
 
-	data = (ORBIS_RenderData *) SDL_calloc(1, sizeof(*data));
+	data = (OPENORBIS_RenderData *) SDL_calloc(1, sizeof(*data));
 	if (!data) {
 		ORBIS_DestroyRenderer(renderer);
 		SDL_OutOfMemory();
@@ -159,24 +71,24 @@ ORBIS_CreateRenderer(SDL_Window *window, Uint32 flags)
 	}
 
 
-	renderer->WindowEvent = ORBIS_WindowEvent;
-	renderer->CreateTexture = ORBIS_CreateTexture;
-	renderer->UpdateTexture = ORBIS_UpdateTexture;
-	renderer->LockTexture = ORBIS_LockTexture;
-	renderer->UnlockTexture = ORBIS_UnlockTexture;
-	renderer->SetRenderTarget = ORBIS_SetRenderTarget;
-	renderer->UpdateViewport = ORBIS_UpdateViewport;
-	renderer->RenderClear = ORBIS_RenderClear;
-	renderer->RenderDrawPoints = ORBIS_RenderDrawPoints;
-	renderer->RenderDrawLines = ORBIS_RenderDrawLines;
-	renderer->RenderFillRects = ORBIS_RenderFillRects;
-	renderer->RenderCopy = ORBIS_RenderCopy;
-	renderer->RenderReadPixels = ORBIS_RenderReadPixels;
-	renderer->RenderCopyEx = ORBIS_RenderCopyEx;
-	renderer->RenderPresent = ORBIS_RenderPresent;
-	renderer->DestroyTexture = ORBIS_DestroyTexture;
-	renderer->DestroyRenderer = ORBIS_DestroyRenderer;
-	renderer->info = ORBIS_RenderDriver.info;
+	renderer->WindowEvent = OPENORBIS_WindowEvent;
+	renderer->CreateTexture = OPENORBIS_CreateTexture;
+	renderer->UpdateTexture = OPENORBIS_UpdateTexture;
+	renderer->LockTexture = OPENORBIS_LockTexture;
+	renderer->UnlockTexture = OPENORBIS_UnlockTexture;
+	renderer->SetRenderTarget = OPENORBIS_SetRenderTarget;
+	renderer->UpdateViewport = OPENORBIS_UpdateViewport;
+	renderer->RenderClear = OPENORBIS_RenderClear;
+	renderer->RenderDrawPoints = OPENORBIS_RenderDrawPoints;
+	renderer->RenderDrawLines = OPENORBIS_RenderDrawLines;
+	renderer->RenderFillRects = OPENORBIS_RenderFillRects;
+	renderer->RenderCopy = OPENORBIS_RenderCopy;
+	renderer->RenderReadPixels = OPENORBIS_RenderReadPixels;
+	renderer->RenderCopyEx = OPENORBIS_RenderCopyEx;
+	renderer->RenderPresent = OPENORBIS_RenderPresent;
+	renderer->DestroyTexture = OPENORBIS_DestroyTexture;
+	renderer->DestroyRenderer = OPENORBIS_DestroyRenderer;
+	renderer->info = OPENORBIS_RenderDriver.info;
 	renderer->info.flags = (SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 	renderer->driverdata = data;
 	renderer->window = window;
@@ -198,16 +110,13 @@ ORBIS_CreateRenderer(SDL_Window *window, Uint32 flags)
 }
 
 static void
-ORBIS_WindowEvent(SDL_Renderer *renderer, const SDL_WindowEvent *event)
-{
+OPENORBIS_WindowEvent(SDL_Renderer *renderer, const SDL_WindowEvent *event){
 
 }
 
-
 static int
-ORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
-{
-	ORBIS_TextureData* orbis_texture = (ORBIS_TextureData *) SDL_calloc(1, sizeof(*orbis_texture));
+OPENORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture){
+	ORBIS_TextureData* openorbis_texture = (OPENORBIS_TextureData *) SDL_calloc(1, sizeof(*orbis_texture));
 
 	if(!orbis_texture)
 		return -1;
@@ -216,7 +125,7 @@ ORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
 
 	if(!orbis_texture->tex)
 	{
-		SDL_free(orbis_texture);
+		SDL_free(openorbis_texture);
 		return SDL_OutOfMemory();
 	}
 
@@ -227,22 +136,18 @@ ORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
 	or SCE_GXM_TEXTURE_FILTER_LINEAR (good for scaling)
 	*/
 	//int scaleMode = GetScaleQuality();
-	//vita2d_texture_set_filters(vita_texture->tex, scaleMode, scaleMode); 
+	orbis_texture->w = openorbis_texture->tex->width;
+	orbis_texture->h = openorbis_texture->tex->height;
+	orbis_texture->pitch = openorbis_texture->w *SDL_BYTESPERPIXEL(texture->format);
 
-	orbis_texture->w = orbis_texture->tex->width;
-	orbis_texture->h = orbis_texture->tex->height;
-	orbis_texture->pitch = orbis_texture->w *SDL_BYTESPERPIXEL(texture->format);
-
-	texture->driverdata = orbis_texture;
+	texture->driverdata = openorbis_texture;
 
 	return 0;
 }
 
-
 static int
-ORBIS_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture,
-				   const SDL_Rect *rect, const void *pixels, int pitch)
-{
+OPENORBIS_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture,
+				   const SDL_Rect *rect, const void *pixels, int pitch){
 	const Uint8 *src;
 	Uint8 *dst;
 	int row, length,dpitch;
@@ -265,21 +170,19 @@ ORBIS_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture,
 }
 
 static int
-ORBIS_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture,
-				 const SDL_Rect *rect, void **pixels, int *pitch)
-{
-	ORBIS_TextureData *orbis_texture = (ORBIS_TextureData *) texture->driverdata;
+OPENORBIS_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture,
+				 const SDL_Rect *rect, void **pixels, int *pitch){
+	ORBIS_TextureData *orbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
 
 	*pixels =
-		(void *) ((Uint8 *) orbis2dTextureGetDataPointer(orbis_texture->tex)
-			+ (rect->y * orbis_texture->w + rect->x) * SDL_BYTESPERPIXEL(texture->format));
-	*pitch = orbis_texture->pitch;
+		(void *) ((Uint8 *) orbis2dTextureGetDataPointer(openorbis_texture->tex)
+			+ (rect->y * openorbis_texture->w + rect->x) * SDL_BYTESPERPIXEL(texture->format));
+	*pitch = openorbis_texture->pitch;
 	return 0;
 }
 
 static void
-ORBIS_UnlockTexture(SDL_Renderer *renderer, SDL_Texture *texture)
-{
+OPENORBIS_UnlockTexture(SDL_Renderer *renderer, SDL_Texture *texture){
 	// no needs to update texture data on ps vita. VITA_LockTexture
 	// already return a pointer to the vita2d texture pixels buffer.
 	// This really improve framerate when using lock/unlock.
@@ -298,21 +201,18 @@ ORBIS_UnlockTexture(SDL_Renderer *renderer, SDL_Texture *texture)
 }
 
 static int
-ORBIS_SetRenderTarget(SDL_Renderer *renderer, SDL_Texture *texture)
-{
+OPENORBIS_SetRenderTarget(SDL_Renderer *renderer, SDL_Texture *texture){
 	return 0;
 }
 
 static int
-ORBIS_UpdateViewport(SDL_Renderer *renderer)
-{
+OPENORBIS_UpdateViewport(SDL_Renderer *renderer){
 	return 0;
 }
 
 
 static void
-ORBIS_SetBlendMode(SDL_Renderer *renderer, int blendMode)
-{
+OPENORBIS_SetBlendMode(SDL_Renderer *renderer, int blendMode){
 	/*VITA_RenderData *data = (VITA_RenderData *) renderer->driverdata;
 	if (blendMode != data-> currentBlendMode) {
 		switch (blendMode) {
@@ -343,8 +243,7 @@ ORBIS_SetBlendMode(SDL_Renderer *renderer, int blendMode)
 
 
 static int
-ORBIS_RenderClear(SDL_Renderer *renderer)
-{
+OPENORBIS_RenderClear(SDL_Renderer *renderer){
 	/* start list */
 	StartDrawing(renderer);
 	uint32_t color = renderer->a << 24 | renderer->r << 16 | renderer->g << 8 | renderer->b;
@@ -357,9 +256,8 @@ ORBIS_RenderClear(SDL_Renderer *renderer)
 }
 
 static int
-ORBIS_RenderDrawPoints(SDL_Renderer *renderer, const SDL_FPoint *points,
-					  int count)
-{
+OPENORBIS_RenderDrawPoints(SDL_Renderer *renderer, const SDL_FPoint *points,
+					  int count){
 	uint32_t color = renderer->a << 24 | renderer->r << 16 | renderer->g << 8 | renderer->b;
 	int i;
 	StartDrawing(renderer);
@@ -372,9 +270,8 @@ ORBIS_RenderDrawPoints(SDL_Renderer *renderer, const SDL_FPoint *points,
 }
 
 static int
-ORBIS_RenderDrawLines(SDL_Renderer *renderer, const SDL_FPoint *points,
-					 int count)
-{
+OPENORBIS_RenderDrawLines(SDL_Renderer *renderer, const SDL_FPoint *points,
+					 int count){
 	uint32_t color = renderer->a << 24 | renderer->r << 16 | renderer->g << 8 | renderer->b;
 	int i;
 	StartDrawing(renderer);
@@ -389,9 +286,8 @@ ORBIS_RenderDrawLines(SDL_Renderer *renderer, const SDL_FPoint *points,
 }
 
 static int
-ORBIS_RenderFillRects(SDL_Renderer *renderer, const SDL_FRect *rects,
-					 int count)
-{
+OPENORBIS_RenderFillRects(SDL_Renderer *renderer, const SDL_FRect *rects,
+					 int count){
 	uint32_t color = renderer->a << 24 | renderer->r << 16 | renderer->g << 8 | renderer->b;
 	int i;
 	StartDrawing(renderer);
@@ -410,29 +306,25 @@ ORBIS_RenderFillRects(SDL_Renderer *renderer, const SDL_FRect *rects,
 #define radToDeg(x) ((x)*180.f/PI)
 #define degToRad(x) ((x)*PI/180.f)
 
-float MathAbs(float x)
-{
+float MathAbs(float x){
 	return (x < 0) ? -x : x;
 }
 
-void MathSincos(float r, float *s, float *c)
-{
+void MathSincos(float r, float *s, float *c){
 	*s = sinf(r);
 	*c = cosf(r);
 }
 
-void Swap(float *a, float *b)
-{
+void Swap(float *a, float *b){
 	float n=*a;
 	*a = *b;
 	*b = n;
 }
 
 static int
-ORBIS_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture,
-				const SDL_Rect *srcrect, const SDL_FRect *dstrect)
-{
-	ORBIS_TextureData *orbis_texture = (ORBIS_TextureData *) texture->driverdata;
+OPENORBIS_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture,
+				const SDL_Rect *srcrect, const SDL_FRect *dstrect){
+	ORBIS_TextureData *orbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
 	//float scaleX = dstrect->w > srcrect->w ? (float)(dstrect->w/srcrect->w) : 1;
 	//float scaleY = dstrect->h > srcrect->h ? (float)(dstrect->h/srcrect->h) : 1;
 	float scaleX = dstrect->w == srcrect->w ? 1 : (float)(dstrect->w/srcrect->w);
@@ -442,25 +334,23 @@ ORBIS_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture,
 
 	ORBIS_SetBlendMode(renderer, renderer->blendMode);
 
-	//orbis2dDrawTexturePartScale(orbis_texture->tex, dstrect->x, dstrect->y,srcrect->x, srcrect->y, srcrect->w, srcrect->h, scaleX, scaleY);
+	//orbis2dDrawTexturePartScale(openorbis_texture->tex, dstrect->x, dstrect->y,srcrect->x, srcrect->y, srcrect->w, srcrect->h, scaleX, scaleY);
 
 	return 0;
 }
 
 static int
-ORBIS_RenderReadPixels(SDL_Renderer *renderer, const SDL_Rect *rect,
+OPENORBIS_RenderReadPixels(SDL_Renderer *renderer, const SDL_Rect *rect,
 					Uint32 pixel_format, void *pixels, int pitch)
-
 {
 		return 0;
 }
 
 
 static int
-ORBIS_RenderCopyEx(SDL_Renderer *renderer, SDL_Texture *texture,
+OPENORBIS_RenderCopyEx(SDL_Renderer *renderer, SDL_Texture *texture,
 				const SDL_Rect *srcrect, const SDL_FRect *dstrect,
-				const double angle, const SDL_FPoint *center, const SDL_RendererFlip flip)
-{
+				const double angle, const SDL_FPoint *center, const SDL_RendererFlip flip){
 	/*float x, y, width, height;
 	float u0, v0, u1, v1;
 	unsigned char alpha;
@@ -554,9 +444,8 @@ ORBIS_RenderCopyEx(SDL_Renderer *renderer, SDL_Texture *texture,
 }
 
 static void
-ORBIS_RenderPresent(SDL_Renderer *renderer)
-{
-	ORBIS_RenderData *data = (ORBIS_RenderData *) renderer->driverdata;
+OPENORBIS_RenderPresent(SDL_Renderer *renderer){
+	ORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
 	if(!data->displayListAvail)
 		return;
 
@@ -568,26 +457,24 @@ ORBIS_RenderPresent(SDL_Renderer *renderer)
 }
 
 static void
-ORBIS_DestroyTexture(SDL_Renderer *renderer, SDL_Texture *texture)
-{
-	ORBIS_RenderData *renderdata = (ORBIS_RenderData *) renderer->driverdata;
-	ORBIS_TextureData *orbis_texture = (ORBIS_TextureData *) texture->driverdata;
+OPENORBIS_DestroyTexture(SDL_Renderer *renderer, SDL_Texture *texture){
+	ORBIS_RenderData *renderdata = (OPENORBIS_RenderData *) renderer->driverdata;
+	ORBIS_TextureData *orbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
 
 	if (renderdata == 0)
 		return;
 
-	if(orbis_texture == 0)
+	if(openorbis_texture == 0)
 		return;
 
-	orbis2dDestroyTexture(orbis_texture->tex);
-	SDL_free(orbis_texture);
+	orbis2dDestroyTexture(openorbis_texture->tex);
+	SDL_free(openorbis_texture);
 	texture->driverdata = NULL;
 }
 
 static void
-ORBIS_DestroyRenderer(SDL_Renderer *renderer)
-{
-	ORBIS_RenderData *data = (ORBIS_RenderData *) renderer->driverdata;
+OPENORBIS_DestroyRenderer(SDL_Renderer *renderer){
+	ORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
 	if (data) {
 		if (!data->initialized)
 			return;
@@ -601,8 +488,8 @@ ORBIS_DestroyRenderer(SDL_Renderer *renderer)
 	SDL_free(renderer);
 }
 
-SDL_RenderDriver ORBIS_RenderDriver = {
-	.CreateRenderer = ORBIS_CreateRenderer,
+SDL_RenderDriver OPENORBIS_RenderDriver = {
+	.CreateRenderer = OPENORBIS_CreateRenderer,
 	.info = {
 		.name = "ORBIS",
 		.flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC,
@@ -614,7 +501,7 @@ SDL_RenderDriver ORBIS_RenderDriver = {
 		.max_texture_height = 720,
 	 }
 };
-#endif /* SDL_VIDEO_RENDER_ORBIS */
+#endif /* SDL_VIDEO_RENDER_OPENORBIS */
 
 /* vi: set ts=4 sw=4 expandtab: */
 

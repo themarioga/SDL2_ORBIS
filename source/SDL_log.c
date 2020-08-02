@@ -37,7 +37,7 @@
 #include <android/log.h>
 #endif
 
-#if defined(__ORBIS__)
+#if defined(__OPENORBIS__)
 //#include <debugnet.h>
 #endif
 
@@ -424,12 +424,12 @@ SDL_LogOutput(void *userdata, int category, SDL_LogPriority priority,
         fprintf(pFile, "%s: %s\n", SDL_priority_prefixes[priority], message);
         fclose (pFile);
     }
-#elif defined(__ORBIS__)
+#elif defined(__OPENORBIS__)
     {
         //debugNetPrintf(DEBUG, "%s: %s\n", SDL_priority_prefixes[priority], message);
     }
 #endif
-#if HAVE_STDIO_H && !defined(__ORBIS__)
+#if HAVE_STDIO_H && !defined(__OPENORBIS__)
     fprintf(stderr, "%s: %s\n", SDL_priority_prefixes[priority], message);
 #if __NACL__
     fflush(stderr);

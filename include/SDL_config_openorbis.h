@@ -19,8 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef _SDL_config_orbis_h
-#define _SDL_config_orbis_h
+#ifndef _SDL_config_openorbis_h
+#define _SDL_config_openorbis_h
 #define SDL_config_h_
 
 #include "SDL_platform.h"
@@ -128,23 +128,22 @@
 #define LACKS_SYS_MMAN_H 1
 
 /* Enable the stub thread support (src/thread/orbis/\*.c) */
-#define SDL_THREAD_ORBIS  1
+#define SDL_THREAD_OPENORBIS  1
 
 /* Enable the stub timer support (src/timer/orbis/\*.c) */
-#define SDL_TIMERS_ORBIS 1
+#define SDL_TIMERS_OPENORBIS 1
 
 /* Enable the stub joystick driver (src/joystick/orbis/\*.c) */
-#define SDL_JOYSTICK_ORBIS        1
+//#define SDL_JOYSTICK_OPENORBIS        1
 
 /* Enable the stub audio driver (src/audio/orbis/\*.c) */
-#define SDL_AUDIO_DRIVER_ORBIS    1
+//#define SDL_AUDIO_DRIVER_OPENORBIS    1
 
 /* ORBIS video driver */
-#define SDL_VIDEO_DRIVER_ORBIS  1
-
+#define SDL_VIDEO_DRIVER_OPENORBIS  1
 
 /* ORBIS render driver */
-#define SDL_VIDEO_RENDER_ORBIS   1
+#define SDL_VIDEO_RENDER_OPENORBIS   1
 
 #define SDL_POWER_HARDWIRED     1
 
@@ -158,4 +157,4 @@
 #define SDL_LOADSO_DISABLED    1
 
 
-#endif /* _SDL_config_orbis_h */
+#endif /* _SDL_config_openorbis_h */

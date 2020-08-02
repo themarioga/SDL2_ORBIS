@@ -57,7 +57,7 @@
 #define SDL_DYNAMIC_API 0  /* Turn off for static analysis, so reports are more clear. */
 #elif defined(__vita__)
 #define SDL_DYNAMIC_API 0  /* vitasdk doesn't support dynamic linking */
-#elif defined(__ORBIS__)
+#elif defined(__OPENORBIS__)
 #define SDL_DYNAMIC_API 0  /* vitasdk doesn't support dynamic linking */
 
 #endif

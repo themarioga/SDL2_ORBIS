@@ -19,27 +19,6 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef _SDL_orbisaudio_h
-#define _SDL_orbisaudio_h
+#include <orbis/_types/pthread.h>
 
-#include "../SDL_sysaudio.h"
-
-/* Hidden "this" pointer for the audio functions */
-#define _THIS   SDL_AudioDevice *this
-
-#define NUM_BUFFERS 2
-
-struct SDL_PrivateAudioData {
-    /* The hardware output channel. */
-    int     channel;
-    /* The raw allocated mixing buffer. */
-    Uint8   *rawbuf;
-    /* Individual mixing buffers. */
-    Uint8   *mixbufs[NUM_BUFFERS];
-    /* Index of the next available mixing buffer. */
-    int     next_buffer;
-};
-
-#endif /* _SDL_orbisaudio_h */
-/* vim: ts=4 sw=4
- */
+typedef OrbisPthread SYS_ThreadHandle;

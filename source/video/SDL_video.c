@@ -103,6 +103,9 @@ static VideoBootStrap *bootstrap[] = {
 #if SDL_VIDEO_DRIVER_ORBIS
     &ORBIS_bootstrap,
 #endif
+#if SDL_VIDEO_DRIVER_OPENORBIS
+    &OPENORBIS_bootstrap,
+#endif
 #if SDL_VIDEO_DRIVER_KMSDRM
     &KMSDRM_bootstrap,
 #endif

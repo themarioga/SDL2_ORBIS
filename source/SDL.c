@@ -448,7 +448,7 @@ SDL_GetPlatform()
     return "PlayStation Portable";
 #elif __vita__
     return "PlayStation Vita";
-#elif __ORBIS__
+#elif __OPENORBIS__
     return "PlayStation 4";
 #else
     return "Unknown (see SDL_platform.h)";

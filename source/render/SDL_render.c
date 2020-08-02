@@ -104,6 +104,9 @@ static const SDL_RenderDriver *render_drivers[] = {
 #if SDL_VIDEO_RENDER_ORBIS
     &ORBIS_RenderDriver,
 #endif
+#if SDL_VIDEO_RENDER_OPENORBIS
+    &OPENORBIS_RenderDriver,
+#endif
     &SW_RenderDriver
 };
 #endif /* !SDL_RENDER_DISABLED */

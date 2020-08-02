@@ -119,7 +119,7 @@ typedef struct SDL_RWops
                 size_t left;
             } buffer;
         } windowsio;
-#elif defined(__ORBIS__)
+#elif defined(__OPENORBIS__)
 		struct
 		{
             long position;

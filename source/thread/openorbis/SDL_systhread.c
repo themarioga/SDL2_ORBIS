@@ -20,7 +20,7 @@
 */
 #include "../../SDL_internal.h"
 
-#if SDL_THREAD_ORBIS
+#if SDL_THREAD_OPENORBIS
 
 /* ORBIS thread management routines for SDL */
 
@@ -31,7 +31,7 @@
 #include "SDL_thread.h"
 #include "../SDL_systhread.h"
 #include "../SDL_thread_c.h"
-#include <kernel.h>
+#include <orbis/libkernel.h>
 
 
 void * ThreadEntry(void *arg)
@@ -44,8 +44,8 @@ int SDL_SYS_CreateThread(SDL_Thread *thread, void *args)
 {
     int priority = 0;
 	int ret=0;
-    ScePthread thid; 
-    thid = scePthreadSelf();
+    OrbisPthread thid; 
+    //thid = scePthreadSelf();
     if (scePthreadGetprio(thid, &priority) == 0 && priority>1) {
 		ret=scePthreadCreate(&thread->handle, NULL, ThreadEntry, args, NULL);
 		if(ret==0)
@@ -68,7 +68,8 @@ void SDL_SYS_SetupThread(const char *name)
 
 SDL_threadID SDL_ThreadID(void)
 {
-    return (SDL_threadID) scePthreadSelf();
+    //return (SDL_threadID) scePthreadSelf();
+    return (SDL_threadID) NULL;
 }
 
 void SDL_SYS_WaitThread(SDL_Thread *thread)
@@ -90,8 +91,8 @@ int SDL_SYS_SetThreadPriority(SDL_ThreadPriority priority)
 {
     int ret=0;
 
-    ScePthread thid; 
-    thid = scePthreadSelf();
+    OrbisPthread thid; 
+    //thid = scePthreadSelf();
 	ret=scePthreadSetprio(thid, priority);
 	if(ret<0)
 	{
@@ -100,7 +101,7 @@ int SDL_SYS_SetThreadPriority(SDL_ThreadPriority priority)
 	return ret;
 }
 
-#endif /* SDL_THREAD_ORBIS */
+#endif /* SDL_THREAD_OPENORBIS */
 
 /* vim: ts=4 sw=4
  */

@@ -20,7 +20,7 @@
 */
 #include "../../SDL_internal.h"
 
-#if SDL_THREAD_ORBIS
+#if SDL_THREAD_OPENORBIS
 
 /* An implementation of condition variables using semaphores and mutexes */
 /*
@@ -219,6 +219,6 @@ SDL_CondWait(SDL_cond * cond, SDL_mutex * mutex)
     return SDL_CondWaitTimeout(cond, mutex, SDL_MUTEX_MAXWAIT);
 }
 
-#endif /* SDL_THREAD_ORBIS */
+#endif /* SDL_THREAD_OPENORBIS */
 
 /* vi: set ts=4 sw=4 expandtab: */

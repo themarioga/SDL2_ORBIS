@@ -20,7 +20,7 @@
 */
 #include "../../SDL_internal.h"
 
-#if SDL_THREAD_ORBIS
+#if SDL_THREAD_OPENORBIS
 
 /* Semaphore functions for the VITA. */
 
@@ -30,11 +30,10 @@
 #include "SDL_error.h"
 #include "SDL_thread.h"
 
-#include <kernel.h>
-typedef void *SceKernelSema;
+#include <orbis/libkernel.h>
 
 struct SDL_semaphore {
-    SceKernelSema  semid;
+    OrbisKernelSema semid;
 };
 
 
@@ -156,7 +155,7 @@ int SDL_SemPost(SDL_sem *sem)
     return 0;
 }
 
-#endif /* SDL_THREAD_ORBIS */
+#endif /* SDL_THREAD_OPENORBIS */
 
 /* vim: ts=4 sw=4
  */

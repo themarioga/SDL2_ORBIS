@@ -20,7 +20,7 @@
 */
 #include "../../SDL_internal.h"
 
-#ifdef SDL_TIMERS_ORBIS
+#ifdef SDL_TIMERS_OPENORBIS
 
 #include "SDL_thread.h"
 #include "SDL_timer.h"
@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
-#include <kernel.h>
+#include <orbis/libkernel.h>
 
 static uint64_t start;
 static SDL_bool ticks_started = SDL_FALSE;
@@ -85,7 +85,7 @@ void SDL_Delay(Uint32 ms)
     sceKernelUsleep(ms * 1000);
 }
 
-#endif /* SDL_TIMERS_ORBIS */
+#endif /* SDL_TIMERS_OPENORBIS */
 
 /* vim: ts=4 sw=4
  */
