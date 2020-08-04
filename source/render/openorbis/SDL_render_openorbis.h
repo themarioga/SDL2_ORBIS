@@ -50,8 +50,6 @@ typedef struct{
 	unsigned int	h;
 } OPENORBIS_TextureData;
 
-extern int64_t flipArg;
-
 /* Orbis renderer implementation, based on the orbis2d lib  */
 extern int SDL_RecreateWindow(SDL_Window *window, Uint32 flags);
 

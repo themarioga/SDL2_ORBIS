@@ -42,7 +42,7 @@ typedef struct SDL_DisplayData
 typedef struct SDL_WindowData
 {
    Scene2D *scene;
-   long frame;
+   int64_t frame;
 } SDL_WindowData;
 
 extern SDL_bool OPENORBIS_initialized;

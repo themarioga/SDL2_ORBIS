@@ -117,7 +117,7 @@ OPENORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture){
 
 	openorbis_texture->tex = orbis2dCreateEmptyTexture(texture->w, texture->h);
 
-	if(!openorbis_texture->tex)
+	if(!openorbis_texture->datap)
 	{
 		SDL_free(openorbis_texture);
 		return SDL_OutOfMemory();
@@ -129,8 +129,8 @@ OPENORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture){
 	scaleMode is either SCE_GXM_TEXTURE_FILTER_POINT (good for tile-map)
 	or SCE_GXM_TEXTURE_FILTER_LINEAR (good for scaling)
 	*/
-	openorbis_texture->w = openorbis_texture->tex->width;
-	openorbis_texture->h = openorbis_texture->tex->height;
+	openorbis_texture->w = openorbis_texture->width;
+	openorbis_texture->h = openorbis_texture->height;
 	openorbis_texture->pitch = openorbis_texture->w *SDL_BYTESPERPIXEL(texture->format);
 
 	texture->driverdata = openorbis_texture;
@@ -445,13 +445,18 @@ OPENORBIS_RenderCopyEx(SDL_Renderer *renderer, SDL_Texture *texture,
 
 static void
 OPENORBIS_RenderPresent(SDL_Renderer *renderer){
+	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
 	OPENORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
 	if(!data->displayListAvail)
 		return;
 
-	orbis2dFinishDrawing(flipArg);
-	orbis2dSwapBuffers();
-	flipArg++;
+ 	// Submit the frame buffer
+	SubmitFlip(windowData->scene, windowData->frame);
+	FrameWait(windowData->scene, windowData->frame);
+
+    // Swap to the next buffer
+    FrameBufferSwap(windowData->scene);
+    windowData->frame++;
 
 	data->displayListAvail = SDL_FALSE;
 }
