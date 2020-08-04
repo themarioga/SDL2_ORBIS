@@ -41,7 +41,10 @@ typedef struct{
 
 
 typedef struct{
-	Orbis2dTexture	*tex;
+	uint32_t *datap;
+	unsigned short width;
+	unsigned short height;
+	unsigned short depth;
 	unsigned int	pitch;
 	unsigned int	w;
 	unsigned int	h;
@@ -52,7 +55,7 @@ extern int64_t flipArg;
 /* Orbis renderer implementation, based on the orbis2d lib  */
 extern int SDL_RecreateWindow(SDL_Window *window, Uint32 flags);
 
-static SDL_Renderer *ORBIS_CreateRenderer(SDL_Window *window, Uint32 flags);
+static SDL_Renderer *OPENORBIS_CreateRenderer(SDL_Window *window, Uint32 flags);
 static void OPENORBIS_WindowEvent(SDL_Renderer *renderer, const SDL_WindowEvent *event);
 static int OPENORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture);
 static int OPENORBIS_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture,

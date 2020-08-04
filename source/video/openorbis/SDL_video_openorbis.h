@@ -25,10 +25,11 @@
 #include "../../SDL_internal.h"
 #include "../SDL_sysvideo.h"
 
+#include "graphics.h"
+
 typedef struct SDL_VideoData
 {
-	SDL_bool gl_initialized;   /* OpenGL device initialization status */
-	uint32_t gl_refcount;      /* OpenGL reference count              */
+   
 } SDL_VideoData;
 
 
@@ -40,7 +41,8 @@ typedef struct SDL_DisplayData
 
 typedef struct SDL_WindowData
 {
-   SDL_bool uses_gl;			/* if true window must support OpenGL */
+   Scene2D *scene;
+   long frame;
 } SDL_WindowData;
 
 extern SDL_bool OPENORBIS_initialized;

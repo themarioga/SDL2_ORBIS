@@ -13,7 +13,7 @@ typedef struct
     uint8_t r;
     uint8_t g;
     uint8_t b;
-} Color;
+} GraphicsColor;
 
 typedef struct
 {
@@ -46,11 +46,13 @@ void SubmitFlip(Scene2D *scene2D, int frameID);
 void FrameWait(Scene2D *scene2D, int frameID);
 void FrameBufferSwap(Scene2D *scene2D);
 void FrameBufferClear(Scene2D *scene2D);
-void FrameBufferFill(Scene2D *scene2D, Color color);
+void FrameBufferFill(Scene2D *scene2D, GraphicsColor color);
 
-void DrawPixel(Scene2D *scene2D, int x, int y, Color color);
-void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, Color color);
+void DrawPixel(Scene2D *scene2D, int x, int y, GraphicsColor color);
+void DrawLine(Scene2D *scene2D, int x1, int y1, int x2, int y2, GraphicsColor color);
+void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, GraphicsColor color);
 
+//Internal
 bool initFlipQueue(Scene2D *scene2D);
 bool allocateFrameBuffers(Scene2D *scene2D, int num);
 char *allocateDisplayMem(Scene2D *scene2D, size_t size);

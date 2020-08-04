@@ -19,9 +19,10 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+#include "../../SDL_internal.h"
+
 #if SDL_VIDEO_RENDER_OPENORBIS
 
-#include "SDL_render_openorbis.h"
 #include <orbis/libkernel.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,33 +30,26 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-static int
-GetScaleQuality(void){
-	const char *hint = SDL_GetHint(SDL_HINT_RENDER_SCALE_QUALITY);
-
-	if (!hint || *hint == '0' || SDL_strcasecmp(hint, "nearest") == 0) {
-		return ORBIS2D_MODE_TILE; // good for tile-map
-	} else {
-		return ORBIS2D_MODE_LINEAR; // good for scaling
-	}
-}
+#include "SDL_render_openorbis.h"
+#include "../../video/openorbis/SDL_video_openorbis.h"
 
 void
 StartDrawing(SDL_Renderer *renderer){
-	ORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
+	OPENORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
 	if(data->displayListAvail)
 		return;
 
-	orbis2dStartDrawing();
+	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
+
+	FrameWait(windowData->scene, windowData->frame);
 
 	data->displayListAvail = SDL_TRUE;
 }
 
 SDL_Renderer *
 OPENORBIS_CreateRenderer(SDL_Window *window, Uint32 flags){
-
 	SDL_Renderer *renderer;
-	ORBIS_RenderData *data;
+	OPENORBIS_RenderData *data;
 
 	renderer = (SDL_Renderer *) SDL_calloc(1, sizeof(*renderer));
 	if (!renderer) {
@@ -65,11 +59,10 @@ OPENORBIS_CreateRenderer(SDL_Window *window, Uint32 flags){
 
 	data = (OPENORBIS_RenderData *) SDL_calloc(1, sizeof(*data));
 	if (!data) {
-		ORBIS_DestroyRenderer(renderer);
+		OPENORBIS_DestroyRenderer(renderer);
 		SDL_OutOfMemory();
 		return NULL;
 	}
-
 
 	renderer->WindowEvent = OPENORBIS_WindowEvent;
 	renderer->CreateTexture = OPENORBIS_CreateTexture;
@@ -92,10 +85,11 @@ OPENORBIS_CreateRenderer(SDL_Window *window, Uint32 flags){
 	renderer->info.flags = (SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 	renderer->driverdata = data;
 	renderer->window = window;
+
 	if (data->initialized != SDL_FALSE)
 		return 0;
-	if(orbis2dGetStatus()==1) {
-			
+
+	if(OPENORBIS_initialized==1) {
 		data->initialized = SDL_TRUE;
 
 		if (flags & SDL_RENDERER_PRESENTVSYNC) {
@@ -104,8 +98,8 @@ OPENORBIS_CreateRenderer(SDL_Window *window, Uint32 flags){
 			data->vsync = SDL_FALSE;
 		}
 		return renderer;
-			
 	}
+
 	return NULL;
 }
 
@@ -116,14 +110,14 @@ OPENORBIS_WindowEvent(SDL_Renderer *renderer, const SDL_WindowEvent *event){
 
 static int
 OPENORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture){
-	ORBIS_TextureData* openorbis_texture = (OPENORBIS_TextureData *) SDL_calloc(1, sizeof(*orbis_texture));
+	OPENORBIS_TextureData* openorbis_texture = (OPENORBIS_TextureData *) SDL_calloc(1, sizeof(*openorbis_texture));
 
-	if(!orbis_texture)
+	if(!openorbis_texture)
 		return -1;
 
-	orbis_texture->tex = orbis2dCreateEmptyTexture(texture->w, texture->h);
+	openorbis_texture->tex = orbis2dCreateEmptyTexture(texture->w, texture->h);
 
-	if(!orbis_texture->tex)
+	if(!openorbis_texture->tex)
 	{
 		SDL_free(openorbis_texture);
 		return SDL_OutOfMemory();
@@ -135,10 +129,9 @@ OPENORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture){
 	scaleMode is either SCE_GXM_TEXTURE_FILTER_POINT (good for tile-map)
 	or SCE_GXM_TEXTURE_FILTER_LINEAR (good for scaling)
 	*/
-	//int scaleMode = GetScaleQuality();
-	orbis_texture->w = openorbis_texture->tex->width;
-	orbis_texture->h = openorbis_texture->tex->height;
-	orbis_texture->pitch = openorbis_texture->w *SDL_BYTESPERPIXEL(texture->format);
+	openorbis_texture->w = openorbis_texture->tex->width;
+	openorbis_texture->h = openorbis_texture->tex->height;
+	openorbis_texture->pitch = openorbis_texture->w *SDL_BYTESPERPIXEL(texture->format);
 
 	texture->driverdata = openorbis_texture;
 
@@ -153,7 +146,7 @@ OPENORBIS_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture,
 	int row, length,dpitch;
 	src = pixels;
 
-	ORBIS_LockTexture(renderer, texture, rect, (void **)&dst, &dpitch);
+	OPENORBIS_LockTexture(renderer, texture, rect, (void **)&dst, &dpitch);
 	length = rect->w * SDL_BYTESPERPIXEL(texture->format);
 	if (length == pitch && length == dpitch) {
 		SDL_memcpy(dst, src, length*rect->h);
@@ -172,7 +165,7 @@ OPENORBIS_UpdateTexture(SDL_Renderer *renderer, SDL_Texture *texture,
 static int
 OPENORBIS_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture,
 				 const SDL_Rect *rect, void **pixels, int *pitch){
-	ORBIS_TextureData *orbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
+	OPENORBIS_TextureData *openorbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
 
 	*pixels =
 		(void *) ((Uint8 *) orbis2dTextureGetDataPointer(openorbis_texture->tex)
@@ -240,61 +233,68 @@ OPENORBIS_SetBlendMode(SDL_Renderer *renderer, int blendMode){
 	}*/
 }
 
-
-
 static int
 OPENORBIS_RenderClear(SDL_Renderer *renderer){
+	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
 	/* start list */
 	StartDrawing(renderer);
-	uint32_t color = renderer->a << 24 | renderer->r << 16 | renderer->g << 8 | renderer->b;
-	if(orbis2dGetStatus()) {
-		orbis2dSetBgColor(color);
+	if(OPENORBIS_initialized) {
+		GraphicsColor gc;
+		gc.r = renderer->r;
+		gc.g = renderer->g;
+		gc.b = renderer->b;
+		FrameBufferFill(windowData->scene, gc);
 	}
-	orbis2dClearBuffer(1);
 	
 	return 0;
 }
 
 static int
-OPENORBIS_RenderDrawPoints(SDL_Renderer *renderer, const SDL_FPoint *points,
-					  int count){
-	uint32_t color = renderer->a << 24 | renderer->r << 16 | renderer->g << 8 | renderer->b;
-	int i;
+OPENORBIS_RenderDrawPoints(SDL_Renderer *renderer, const SDL_FPoint *points, int count){
+	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
 	StartDrawing(renderer);
+		GraphicsColor gc;
+		gc.r = renderer->r;
+		gc.g = renderer->g;
+		gc.b = renderer->b;
 
-	for (i = 0; i < count; ++i) {
-		orbis2dDrawPixelColor(points[i].x, points[i].y, color);
+	for (int i = 0; i < count; ++i) {
+		DrawPixel(windowData->scene, points[i].x, points[i].y, gc);
 	}
 
 	return 0;
 }
 
 static int
-OPENORBIS_RenderDrawLines(SDL_Renderer *renderer, const SDL_FPoint *points,
-					 int count){
-	uint32_t color = renderer->a << 24 | renderer->r << 16 | renderer->g << 8 | renderer->b;
-	int i;
+OPENORBIS_RenderDrawLines(SDL_Renderer *renderer, const SDL_FPoint *points, int count){
+	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
 	StartDrawing(renderer);
+	GraphicsColor gc;
+	gc.r = renderer->r;
+	gc.g = renderer->g;
+	gc.b = renderer->b;
 
-	for (i = 0; i < count; ++i) {
-	if (i < count -1) {
-		orbis2dDrawLineColor(points[i].x, points[i].y, points[i+1].x, points[i+1].y, color);
-	}
+	for (int i = 0; i < count; ++i) {
+		if (i < count -1) {
+			DrawLine(windowData->scene, points[i].x, points[i].y, points[i+1].x, points[i+1].y, gc);
+		}
 	}
 
 	return 0;
 }
 
 static int
-OPENORBIS_RenderFillRects(SDL_Renderer *renderer, const SDL_FRect *rects,
-					 int count){
-	uint32_t color = renderer->a << 24 | renderer->r << 16 | renderer->g << 8 | renderer->b;
-	int i;
+OPENORBIS_RenderFillRects(SDL_Renderer *renderer, const SDL_FRect *rects, int count){
+	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
 	StartDrawing(renderer);
+	GraphicsColor gc;
+	gc.r = renderer->r;
+	gc.g = renderer->g;
+	gc.b = renderer->b;
 
-	for (i = 0; i < count; ++i) {
+	for (int i = 0; i < count; ++i) {
 		const SDL_FRect *rect = &rects[i];
-		orbis2dDrawRectColor(rect->x, rect->w, rect->y, rect->h, color);
+		DrawRectangle(windowData->scene, rect->x, rect->w, rect->y, rect->h, gc);
 	}
 
 	return 0;
@@ -324,16 +324,16 @@ void Swap(float *a, float *b){
 static int
 OPENORBIS_RenderCopy(SDL_Renderer *renderer, SDL_Texture *texture,
 				const SDL_Rect *srcrect, const SDL_FRect *dstrect){
-	ORBIS_TextureData *orbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
-	//float scaleX = dstrect->w > srcrect->w ? (float)(dstrect->w/srcrect->w) : 1;
-	//float scaleY = dstrect->h > srcrect->h ? (float)(dstrect->h/srcrect->h) : 1;
+	OPENORBIS_TextureData *openorbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
 	float scaleX = dstrect->w == srcrect->w ? 1 : (float)(dstrect->w/srcrect->w);
 	float scaleY = dstrect->h == srcrect->h ? 1 : (float)(dstrect->h/srcrect->h);
 
 	StartDrawing(renderer);
 
-	ORBIS_SetBlendMode(renderer, renderer->blendMode);
+	OPENORBIS_SetBlendMode(renderer, renderer->blendMode);
 
+	//float scaleX = dstrect->w > srcrect->w ? (float)(dstrect->w/srcrect->w) : 1;
+	//float scaleY = dstrect->h > srcrect->h ? (float)(dstrect->h/srcrect->h) : 1;
 	//orbis2dDrawTexturePartScale(openorbis_texture->tex, dstrect->x, dstrect->y,srcrect->x, srcrect->y, srcrect->w, srcrect->h, scaleX, scaleY);
 
 	return 0;
@@ -445,7 +445,7 @@ OPENORBIS_RenderCopyEx(SDL_Renderer *renderer, SDL_Texture *texture,
 
 static void
 OPENORBIS_RenderPresent(SDL_Renderer *renderer){
-	ORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
+	OPENORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
 	if(!data->displayListAvail)
 		return;
 
@@ -458,8 +458,8 @@ OPENORBIS_RenderPresent(SDL_Renderer *renderer){
 
 static void
 OPENORBIS_DestroyTexture(SDL_Renderer *renderer, SDL_Texture *texture){
-	ORBIS_RenderData *renderdata = (OPENORBIS_RenderData *) renderer->driverdata;
-	ORBIS_TextureData *orbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
+	OPENORBIS_RenderData *renderdata = (OPENORBIS_RenderData *) renderer->driverdata;
+	OPENORBIS_TextureData *openorbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
 
 	if (renderdata == 0)
 		return;
@@ -474,7 +474,7 @@ OPENORBIS_DestroyTexture(SDL_Renderer *renderer, SDL_Texture *texture){
 
 static void
 OPENORBIS_DestroyRenderer(SDL_Renderer *renderer){
-	ORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
+	OPENORBIS_RenderData *data = (OPENORBIS_RenderData *) renderer->driverdata;
 	if (data) {
 		if (!data->initialized)
 			return;

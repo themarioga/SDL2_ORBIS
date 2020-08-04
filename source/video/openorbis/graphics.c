@@ -160,15 +160,15 @@ void FrameBufferSwap(Scene2D *scene2D){
 
 void FrameBufferClear(Scene2D *scene2D){
 	// Clear the screen with a white frame buffer
-	Color blank = { 255, 255, 255 };
+	GraphicsColor blank = { 255, 255, 255 };
 	FrameBufferFill(scene2D, blank);
 }
 
-void FrameBufferFill(Scene2D *scene2D, Color color){
+void FrameBufferFill(Scene2D *scene2D, GraphicsColor color){
 	DrawRectangle(scene2D, 0, 0, scene2D->width, scene2D->height, color);
 }
 
-void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, Color color){
+void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, GraphicsColor color){
 	int xPos, yPos;
 	
 	// Draw row-by-row, column-by-column
@@ -181,7 +181,20 @@ void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, Color color){
 	}
 }
 
-void DrawPixel(Scene2D *scene2D, int x, int y, Color color){
+void DrawLine(Scene2D *scene2D, int x1, int y1, int x2, int y2, GraphicsColor color){
+	int xPos, yPos;
+
+	int dx = x2 - x1;
+	int dy = y2 - y1;
+
+	for (int xPos = x1; xPos < x2; xPos++) {
+		yPos = y1 + dy * (xPos - x1);
+		if (dx != 0) yPos = yPos / dx;
+		DrawPixel(scene2D, xPos, yPos, color);
+	}
+}
+
+void DrawPixel(Scene2D *scene2D, int x, int y, GraphicsColor color){
 	// Get pixel location based on pitch
 	int pixel = (y * scene2D->width) + x;
 	

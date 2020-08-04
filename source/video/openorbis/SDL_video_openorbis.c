@@ -37,6 +37,10 @@
 
 SDL_bool OPENORBIS_initialized = SDL_FALSE;
 
+#define FRAME_DEPTH 4
+#define MEM_SIZE 0xC000000
+#define NUMBER_OF_BUFFERS 2
+
 static int
 OPENORBIS_Available(void)
 {
@@ -84,7 +88,6 @@ OPENORBIS_Create()
         SDL_free(device);
         return NULL;
     }
-
 
     device->driverdata = phdata;
 
@@ -190,6 +193,11 @@ OPENORBIS_CreateWindow(_THIS, SDL_Window * window)
         return SDL_OutOfMemory();
     }
 
+    wdata->scene = Init(window->w, window->h, FRAME_DEPTH, MEM_SIZE, NUMBER_OF_BUFFERS);
+    wdata->frame = 0;
+
+    FrameBufferClear(wdata->scene);
+
     /* Setup driver data for this window */
     window->driverdata = wdata;
 
@@ -200,10 +208,11 @@ OPENORBIS_CreateWindow(_THIS, SDL_Window * window)
         return SDL_OutOfMemory();
     }
 
-    OPENORBIS_initialized = SDL_TRUE;
-
     // fix input, we need to find a better way
     SDL_SetKeyboardFocus(window);
+
+    // Set as initialized
+    OPENORBIS_initialized = SDL_TRUE;
 
     /* Window has been successfully created */
     return 0;

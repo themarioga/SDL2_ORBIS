@@ -43,6 +43,8 @@
 #include "SDL_config_psp.h"
 #elif defined(__vita__)
 #include "SDL_config_vita.h"
+#elif defined(__ORBIS__)
+#include "SDL_config_orbis.h"
 #elif defined(__OPENORBIS__)
 #include "SDL_config_openorbis.h"
 #else
