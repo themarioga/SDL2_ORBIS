@@ -160,15 +160,15 @@ void FrameBufferSwap(Scene2D *scene2D){
 
 void FrameBufferClear(Scene2D *scene2D){
 	// Clear the screen with a white frame buffer
-	GraphicsColor blank = { 255, 255, 255 };
+	Scene2DColor blank = { 255, 255, 255 };
 	FrameBufferFill(scene2D, blank);
 }
 
-void FrameBufferFill(Scene2D *scene2D, GraphicsColor color){
+void FrameBufferFill(Scene2D *scene2D, Scene2DColor color){
 	DrawRectangle(scene2D, 0, 0, scene2D->width, scene2D->height, color);
 }
 
-void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, GraphicsColor color){
+void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, Scene2DColor color){
 	int xPos, yPos;
 	
 	// Draw row-by-row, column-by-column
@@ -181,7 +181,7 @@ void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, GraphicsColor c
 	}
 }
 
-void DrawLine(Scene2D *scene2D, int x1, int y1, int x2, int y2, GraphicsColor color){
+void DrawLine(Scene2D *scene2D, int x1, int y1, int x2, int y2, Scene2DColor color){
 	int xPos, yPos;
 
 	int dx = x2 - x1;
@@ -194,7 +194,7 @@ void DrawLine(Scene2D *scene2D, int x1, int y1, int x2, int y2, GraphicsColor co
 	}
 }
 
-void DrawPixel(Scene2D *scene2D, int x, int y, GraphicsColor color){
+void DrawPixel(Scene2D *scene2D, int x, int y, Scene2DColor color){
 	// Get pixel location based on pitch
 	int pixel = (y * scene2D->width) + x;
 	
@@ -203,4 +203,30 @@ void DrawPixel(Scene2D *scene2D, int x, int y, GraphicsColor color){
 	
 	// Draw to the frame buffer
 	((uint32_t *)scene2D->frameBuffers[scene2D->activeFrameBufferIdx])[pixel] = encodedColor;
+}
+
+Scene2DTexture* CreateEmptyTexture(unsigned int w, unsigned int h) {
+	Scene2DTexture *img = NULL;
+	img = malloc(sizeof(Scene2DTexture));
+
+	if (img!=NULL) {
+		img->datap=malloc(w*h*4);
+		if(img->datap==NULL) {
+			free(img);
+			return NULL;
+		}
+		img->width=w;
+		img->height=h;
+		img->depth=32;
+	}
+	return img;
+}
+
+void DestroyTexture(Scene2DTexture *texture) {
+	if(texture != NULL) {
+		if(texture->datap != NULL) {
+			free(texture->datap);
+		}
+	}
+	free(texture);
 }

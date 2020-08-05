@@ -26,6 +26,7 @@
 
 #include "SDL_hints.h"
 #include "../SDL_sysrender.h"
+#include "../../video/openorbis/SDL_video_openorbis.h"
 
 typedef struct{
 	void		*frontbuffer;
@@ -41,10 +42,7 @@ typedef struct{
 
 
 typedef struct{
-	uint32_t *datap;
-	unsigned short width;
-	unsigned short height;
-	unsigned short depth;
+	Scene2DTexture *texture;
 	unsigned int	pitch;
 	unsigned int	w;
 	unsigned int	h;

@@ -31,7 +31,6 @@
 #include <stdlib.h>
 
 #include "SDL_render_openorbis.h"
-#include "../../video/openorbis/SDL_video_openorbis.h"
 
 void
 StartDrawing(SDL_Renderer *renderer){
@@ -115,9 +114,9 @@ OPENORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture){
 	if(!openorbis_texture)
 		return -1;
 
-	openorbis_texture->tex = orbis2dCreateEmptyTexture(texture->w, texture->h);
+	openorbis_texture->texture = CreateEmptyTexture(texture->w, texture->h);
 
-	if(!openorbis_texture->datap)
+	if(!openorbis_texture->texture->datap)
 	{
 		SDL_free(openorbis_texture);
 		return SDL_OutOfMemory();
@@ -129,8 +128,8 @@ OPENORBIS_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture){
 	scaleMode is either SCE_GXM_TEXTURE_FILTER_POINT (good for tile-map)
 	or SCE_GXM_TEXTURE_FILTER_LINEAR (good for scaling)
 	*/
-	openorbis_texture->w = openorbis_texture->width;
-	openorbis_texture->h = openorbis_texture->height;
+	openorbis_texture->w = openorbis_texture->texture->width;
+	openorbis_texture->h = openorbis_texture->texture->height;
 	openorbis_texture->pitch = openorbis_texture->w *SDL_BYTESPERPIXEL(texture->format);
 
 	texture->driverdata = openorbis_texture;
@@ -168,7 +167,7 @@ OPENORBIS_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture,
 	OPENORBIS_TextureData *openorbis_texture = (OPENORBIS_TextureData *) texture->driverdata;
 
 	*pixels =
-		(void *) ((Uint8 *) orbis2dTextureGetDataPointer(openorbis_texture->tex)
+		(void *) ((Uint8 *) openorbis_texture->texture->datap
 			+ (rect->y * openorbis_texture->w + rect->x) * SDL_BYTESPERPIXEL(texture->format));
 	*pitch = openorbis_texture->pitch;
 	return 0;
@@ -176,21 +175,7 @@ OPENORBIS_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture,
 
 static void
 OPENORBIS_UnlockTexture(SDL_Renderer *renderer, SDL_Texture *texture){
-	// no needs to update texture data on ps vita. VITA_LockTexture
-	// already return a pointer to the vita2d texture pixels buffer.
-	// This really improve framerate when using lock/unlock.
-	
-	/*
-	VITA_TextureData *vita_texture = (VITA_TextureData *) texture->driverdata;
-	SDL_Rect rect;
 
-	// We do whole texture updates, at least for now
-	rect.x = 0;
-	rect.y = 0;
-	rect.w = texture->w;
-	rect.h = texture->h;
-	VITA_UpdateTexture(renderer, texture, &rect, vita_texture->data, vita_texture->pitch);
-	*/
 }
 
 static int
@@ -206,31 +191,7 @@ OPENORBIS_UpdateViewport(SDL_Renderer *renderer){
 
 static void
 OPENORBIS_SetBlendMode(SDL_Renderer *renderer, int blendMode){
-	/*VITA_RenderData *data = (VITA_RenderData *) renderer->driverdata;
-	if (blendMode != data-> currentBlendMode) {
-		switch (blendMode) {
-		case SDL_BLENDMODE_NONE:
-				sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
-				sceGuDisable(GU_BLEND);
-			break;
-		case SDL_BLENDMODE_BLEND:
-				sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
-				sceGuEnable(GU_BLEND);
-				sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0 );
-			break;
-		case SDL_BLENDMODE_ADD:
-				sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
-				sceGuEnable(GU_BLEND);
-				sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0x00FFFFFF );
-			break;
-		case SDL_BLENDMODE_MOD:
-				sceGuTexFunc(GU_TFX_MODULATE , GU_TCC_RGBA);
-				sceGuEnable(GU_BLEND);
-				sceGuBlendFunc( GU_ADD, GU_FIX, GU_SRC_COLOR, 0, 0);
-			break;
-		}
-		data->currentBlendMode = blendMode;
-	}*/
+	
 }
 
 static int
@@ -239,7 +200,7 @@ OPENORBIS_RenderClear(SDL_Renderer *renderer){
 	/* start list */
 	StartDrawing(renderer);
 	if(OPENORBIS_initialized) {
-		GraphicsColor gc;
+		Scene2DColor gc;
 		gc.r = renderer->r;
 		gc.g = renderer->g;
 		gc.b = renderer->b;
@@ -253,7 +214,7 @@ static int
 OPENORBIS_RenderDrawPoints(SDL_Renderer *renderer, const SDL_FPoint *points, int count){
 	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
 	StartDrawing(renderer);
-		GraphicsColor gc;
+		Scene2DColor gc;
 		gc.r = renderer->r;
 		gc.g = renderer->g;
 		gc.b = renderer->b;
@@ -269,7 +230,7 @@ static int
 OPENORBIS_RenderDrawLines(SDL_Renderer *renderer, const SDL_FPoint *points, int count){
 	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
 	StartDrawing(renderer);
-	GraphicsColor gc;
+	Scene2DColor gc;
 	gc.r = renderer->r;
 	gc.g = renderer->g;
 	gc.b = renderer->b;
@@ -287,7 +248,7 @@ static int
 OPENORBIS_RenderFillRects(SDL_Renderer *renderer, const SDL_FRect *rects, int count){
 	SDL_WindowData *windowData = (SDL_WindowData *)renderer->window->driverdata;
 	StartDrawing(renderer);
-	GraphicsColor gc;
+	Scene2DColor gc;
 	gc.r = renderer->r;
 	gc.g = renderer->g;
 	gc.b = renderer->b;
@@ -351,95 +312,6 @@ static int
 OPENORBIS_RenderCopyEx(SDL_Renderer *renderer, SDL_Texture *texture,
 				const SDL_Rect *srcrect, const SDL_FRect *dstrect,
 				const double angle, const SDL_FPoint *center, const SDL_RendererFlip flip){
-	/*float x, y, width, height;
-	float u0, v0, u1, v1;
-	unsigned char alpha;
-	float centerx, centery;
-
-	x = dstrect->x;
-	y = dstrect->y;
-	width = dstrect->w;
-	height = dstrect->h;
-
-	u0 = srcrect->x;
-	v0 = srcrect->y;
-	u1 = srcrect->x + srcrect->w;
-	v1 = srcrect->y + srcrect->h;
-
-	centerx = center->x;
-	centery = center->y;
-
-	alpha = texture->a;
-
-	StartDrawing(renderer);
-	TextureActivate(texture);
-	VITA_SetBlendMode(renderer, renderer->blendMode);
-
-	if(alpha != 255)
-	{
-		sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
-		sceGuColor(GU_RGBA(255, 255, 255, alpha));
-	}else{
-		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
-		sceGuColor(0xFFFFFFFF);
-	}
-
-	x += centerx;
-	y += centery;
-
-	float c, s;
-
-	MathSincos(degToRad(angle), &s, &c);
-
-	width  -= centerx;
-	height -= centery;
-
-
-	float cw = c*width;
-	float sw = s*width;
-	float ch = c*height;
-	float sh = s*height;
-
-	VertTV* vertices = (VertTV*)sceGuGetMemory(sizeof(VertTV)<<2);
-
-	vertices[0].u = u0;
-	vertices[0].v = v0;
-	vertices[0].x = x - cw + sh;
-	vertices[0].y = y - sw - ch;
-	vertices[0].z = 0;
-
-	vertices[1].u = u0;
-	vertices[1].v = v1;
-	vertices[1].x = x - cw - sh;
-	vertices[1].y = y - sw + ch;
-	vertices[1].z = 0;
-
-	vertices[2].u = u1;
-	vertices[2].v = v1;
-	vertices[2].x = x + cw - sh;
-	vertices[2].y = y + sw + ch;
-	vertices[2].z = 0;
-
-	vertices[3].u = u1;
-	vertices[3].v = v0;
-	vertices[3].x = x + cw + sh;
-	vertices[3].y = y + sw - ch;
-	vertices[3].z = 0;
-
-	if (flip & SDL_FLIP_HORIZONTAL) {
-				Swap(&vertices[0].v, &vertices[2].v);
-				Swap(&vertices[1].v, &vertices[3].v);
-	}
-	if (flip & SDL_FLIP_VERTICAL) {
-				Swap(&vertices[0].u, &vertices[2].u);
-				Swap(&vertices[1].u, &vertices[3].u);
-	}
-
-	sceGuDrawArray(GU_TRIANGLE_FAN, GU_TEXTURE_32BITF|GU_VERTEX_32BITF|GU_TRANSFORM_2D, 4, 0, vertices);
-
-	if(alpha != 255)
-		sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
-	return 0;*/
 	return 1;
 }
 
@@ -472,7 +344,7 @@ OPENORBIS_DestroyTexture(SDL_Renderer *renderer, SDL_Texture *texture){
 	if(openorbis_texture == 0)
 		return;
 
-	orbis2dDestroyTexture(openorbis_texture->tex);
+	DestroyTexture(openorbis_texture->texture);
 	SDL_free(openorbis_texture);
 	texture->driverdata = NULL;
 }
@@ -484,7 +356,7 @@ OPENORBIS_DestroyRenderer(SDL_Renderer *renderer){
 		if (!data->initialized)
 			return;
 
-	//	orbis2dFinish();
+		// orbis2dFinish();
 
 		data->initialized = SDL_FALSE;
 		data->displayListAvail = SDL_FALSE;
@@ -509,4 +381,3 @@ SDL_RenderDriver OPENORBIS_RenderDriver = {
 #endif /* SDL_VIDEO_RENDER_OPENORBIS */
 
 /* vi: set ts=4 sw=4 expandtab: */
-

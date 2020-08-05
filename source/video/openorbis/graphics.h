@@ -1,3 +1,6 @@
+/** Mix from OpenOrbis Graphic Sample and OrbisDev liborbis2d
+Thanks to SpecterDev, masterzorag and their teams **/
+
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
@@ -8,15 +11,20 @@
 #include <orbis/Sysmodule.h>
 
 // Color is used to pack together RGB information, and is used for every function that draws colored pixels.
-typedef struct
-{
+typedef struct {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-} GraphicsColor;
+} Scene2DColor;
 
-typedef struct
-{
+typedef struct {
+	uint32_t *datap;
+	unsigned short width;
+	unsigned short height;
+	unsigned short depth;
+} Scene2DTexture __attribute__ ((aligned (16)));
+
+typedef struct {
 	int width;
 	int height;
 	int depth;
@@ -46,11 +54,14 @@ void SubmitFlip(Scene2D *scene2D, int frameID);
 void FrameWait(Scene2D *scene2D, int frameID);
 void FrameBufferSwap(Scene2D *scene2D);
 void FrameBufferClear(Scene2D *scene2D);
-void FrameBufferFill(Scene2D *scene2D, GraphicsColor color);
+void FrameBufferFill(Scene2D *scene2D, Scene2DColor color);
 
-void DrawPixel(Scene2D *scene2D, int x, int y, GraphicsColor color);
-void DrawLine(Scene2D *scene2D, int x1, int y1, int x2, int y2, GraphicsColor color);
-void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, GraphicsColor color);
+void DrawPixel(Scene2D *scene2D, int x, int y, Scene2DColor color);
+void DrawLine(Scene2D *scene2D, int x1, int y1, int x2, int y2, Scene2DColor color);
+void DrawRectangle(Scene2D *scene2D, int x, int y, int w, int h, Scene2DColor color);
+
+Scene2DTexture* CreateEmptyTexture(unsigned int w, unsigned int h);
+void DestroyTexture(Scene2DTexture *texture);
 
 //Internal
 bool initFlipQueue(Scene2D *scene2D);
