@@ -1,6 +1,6 @@
 SDL2 for OpenOrbis (maybe)
 ======================
-Probably SDL2 for OpenOrbis, not sure because I can't test it until TheFlow's exploit is fully working for 6.74 (or at least 6.20) but it compiles ¯\_(ツ)_/¯
+Probably SDL2 for OpenOrbis, not sure because I can't test it now, I've ported only the graphics part, but it compiles ¯\_(ツ)_/¯
  
  What does this do?
 ===================
